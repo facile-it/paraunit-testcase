@@ -1,0 +1,16 @@
+.DS_Store
+._.DS_Store
+._*
+*.tgz
+*.phar
+bin
+vendor
+composer.lock
+build/
+
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
+
