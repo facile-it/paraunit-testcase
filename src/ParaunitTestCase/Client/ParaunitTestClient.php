@@ -1,6 +1,6 @@
 <?php
 
-namespace Facile\Cbr\CoreBundle\Tests;
+namespace ParaunitTestCase\Client;
 
 use Doctrine\ORM\EntityManager;
 use Symfony\Bundle\FrameworkBundle\Client;

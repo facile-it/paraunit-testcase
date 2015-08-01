@@ -1,6 +1,6 @@
 <?php
 
-namespace Facile\Cbr\CoreBundle\Tests;
+namespace ParaunitTestCase\TestCase;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
