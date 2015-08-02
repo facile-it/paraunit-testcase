@@ -5,6 +5,7 @@ namespace ParaunitTestCase\TestCase;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Liip\FunctionalTestBundle\Test\WebTestCase;
+use ParaunitTestCase\Client\ParaunitTestClient;
 use Symfony\Bundle\FrameworkBundle\Client;
 use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\HttpFoundation\Session\Session;
@@ -74,9 +75,10 @@ abstract class ParaUnitWebTestCase extends WebTestCase
     }
 
     /**
+     * @param Client $client
      * @param $username
-     * @param $client
      * @return null
+     * @throws \Exception
      */
     private function logInUser(Client $client, $username)
     {
