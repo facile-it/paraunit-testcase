@@ -7,11 +7,11 @@ use Doctrine\ORM\EntityManagerInterface;
 use Liip\FunctionalTestBundle\Test\WebTestCase;
 use ParaunitTestCase\Client\ParaunitTestClient;
 use Symfony\Bundle\FrameworkBundle\Client;
-use Symfony\Component\BrowserKit\Cookie;
-use Symfony\Component\HttpFoundation\Session\Session;
-use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
-use Symfony\Component\Security\Core\User\UserInterface;
 
+/**
+ * Class ParaUnitWebTestCase
+ * @package ParaunitTestCase\TestCase
+ */
 abstract class ParaUnitWebTestCase extends WebTestCase
 {
     /**
@@ -33,6 +33,9 @@ abstract class ParaUnitWebTestCase extends WebTestCase
         $this->initialize();
     }
 
+    /**
+     * Do not EVER forget to call parent::setUp() if you override this method!
+     */
     public function setUp()
     {
         parent::setUp();
@@ -41,6 +44,9 @@ abstract class ParaUnitWebTestCase extends WebTestCase
         $this->getEM()->beginTransaction();
     }
 
+    /**
+     * Do not EVER forget to call parent::tearDown() if you override this method!
+     */
     public function tearDown()
     {
         parent::tearDown();
@@ -55,7 +61,7 @@ abstract class ParaUnitWebTestCase extends WebTestCase
     /**
      * @param string $username
      * @param string $password
-     * @return Client
+     * @return Client | ParaunitTestClient
      */
     protected function getAuthorizedClient($username, $password)
     {
@@ -64,59 +70,38 @@ abstract class ParaUnitWebTestCase extends WebTestCase
             'PHP_AUTH_PW'   => $password,
         ));
 
-        $this->logInUser($client, $username);
+        $this->prepareAuthorizedClient($client, $username, $password);
 
         return $client;
     }
 
+    /**
+     * @return Client | ParaunitTestClient
+     */
     protected function getUnauthorizedClient()
     {
         return new ParaunitTestClient($this->getContainer()->get('kernel'), array());
     }
 
     /**
+     * Hook for client advanced authentication
+     *
+     * Use this method (and ovveride it) if you need to do something else beside the simple
+     * HTTP authentication when you call the self::getAuthorizedClient() method
+     *
      * @param Client $client
-     * @param $username
-     * @return null
-     * @throws \Exception
+     * @param string $username
+     * @param string $password
      */
-    private function logInUser(Client $client, $username)
+    protected function prepareAuthorizedClient(Client $client, $username, $password)
     {
-        $container = $client->getContainer();
-        $session = $container->get('session');
-
-        $user = $container->get('facile.cbr_core_bundle.security.user_provider')->loadUserByUsername($username);
-
-        if(!$user) {
-            throw new \Exception('User not found');
-        }
-
-        $firewall = 'be';
-        $token = new UsernamePasswordToken($username, null, $firewall, $user->getRoles());
-        $token->setUser($user);
-        $container->get('security.context')->setToken($token);
-
-        $session->set('_security_'.$firewall, serialize($token));
-        $this->setOtherThingsInSession($session, $user);
-        $session->save();
-
-        $cookie = new Cookie($session->getName(), $session->getId());
-        $client->getCookieJar()->set($cookie);
-    }
-
-    /**
-     * @param Session $session
-     * @param UserInterface $user
-     */
-    protected function setOtherThingsInSession(Session $session, UserInterface $user)
-    {
-        // hook for additional things to be set in session
+        // override me!
     }
 
     /**
      * @return EntityManagerInterface
      */
-    public function getEm()
+    protected function getEm()
     {
         return $this->em;
     }
