@@ -11,7 +11,7 @@ This package is meant to be used for functional testing inside Symfony2+Doctrine
 
 If you need to test controllers that requires authentication, it's best to set the security to HTTP-basic in your test environment, to speed up the test and avoid re-testing the login functionality of your app; if this isn't viable for you, see **Advanced usage**.
 
-It's suggested in combination with facile-it/paraunit, for even more faster testing!
+It's suggested in combination with [facile-it/paraunit](https://github.com/facile-it/paraunit), for even more faster testing!
 
 ## Installation
 To use this package, use composer:
