@@ -40,5 +40,8 @@
       "": "src/"
     }
   },
-  "minimum-stability": "dev"
+  "minimum-stability": "dev",
+  "suggest": {
+    "facile-it/paraunit": "For parallel test running; it's faster!"
+  }
 }
