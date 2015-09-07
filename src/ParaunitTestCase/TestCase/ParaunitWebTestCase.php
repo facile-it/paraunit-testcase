@@ -12,7 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Client;
  * Class ParaUnitWebTestCase
  * @package ParaunitTestCase\TestCase
  */
-abstract class ParaUnitWebTestCase extends WebTestCase
+abstract class ParaunitWebTestCase extends WebTestCase
 {
     /**
      * @var EntityManagerInterface
