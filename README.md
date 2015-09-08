@@ -1,4 +1,8 @@
 # paraunit-testcase
+
+[![Stable release][Last stable image]][Packagist link]
+[![Unstable release][Last unstable image]][Packagist link]
+
 TestCase and HTTP client to test Symfony2 applications with Doctrine database isolation:
 
  * no more manual database cleanup after each test, it's already done!
@@ -48,3 +52,8 @@ It's possible to extend `ParaunitWebTestCase` more before using it as your base 
 
  * extend and use the `prepareAuthorizedClient(...)` hook method to add additional authentication and preparation to the client, if needed
  * do NOT EVER FORGET to call the parent methods first if you override the `setUp()` and `tearDown()` methods
+
+[Last stable image]: https://poser.pugx.org/facile-it/paraunit/version.svg
+[Last unstable image]: https://poser.pugx.org/facile-it/paraunit/v/unstable.svg
+
+[Packagist link]: https://packagist.org/packages/facile-it/paraunit
