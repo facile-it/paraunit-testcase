@@ -53,7 +53,7 @@ It's possible to extend `ParaunitWebTestCase` more before using it as your base 
  * extend and use the `prepareAuthorizedClient(...)` hook method to add additional authentication and preparation to the client, if needed
  * do NOT EVER FORGET to call the parent methods first if you override the `setUp()` and `tearDown()` methods
 
-[Last stable image]: https://poser.pugx.org/facile-it/paraunit/version.svg
-[Last unstable image]: https://poser.pugx.org/facile-it/paraunit/v/unstable.svg
+[Last stable image]: https://poser.pugx.org/facile-it/paraunit-testcase/version.svg
+[Last unstable image]: https://poser.pugx.org/facile-it/paraunit-testcase/v/unstable.svg
 
-[Packagist link]: https://packagist.org/packages/facile-it/paraunit
+[Packagist link]: https://packagist.org/packages/facile-it/paraunit-testcase
