@@ -7,6 +7,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Liip\FunctionalTestBundle\Test\WebTestCase;
 use ParaunitTestCase\Client\ParaunitTestClient;
 use Symfony\Bundle\FrameworkBundle\Client;
+use Symfony\Component\DependencyInjection\Container;
 
 /**
  * Class ParaUnitWebTestCase
@@ -99,11 +100,37 @@ abstract class ParaunitWebTestCase extends WebTestCase
     }
 
     /**
+     * Will return the entity manager.
+     * using the doctrine em naming convention will try to fetch the service
+     * doctrine.orm.{entityManagername}_entity_manager if exist.
+     *
+     * @param null $entityManagerName the name of the desired entity manager or null for the default one
+     *
      * @return EntityManagerInterface
+     *
      */
-    protected function getEm()
+    protected function getEm($entityManagerName = null)
     {
-        return $this->em;
+
+        if (!$entityManagerName){
+            return $this->em;
+        }
+
+        $entityManagerServiceName = 'doctrine.orm'.$entityManagerName.'_entity_manager';
+
+        $entityManger = $this->getContainer()->get($entityManagerServiceName, Container::NULL_ON_INVALID_REFERENCE);
+
+        if (!$entityManger instanceof EntityManagerInterface) {
+            throw new \BadMethodCallException(
+                sprintf(
+                    'There is no entity manager with the following name: %s. Please check your doctrine cofiguration',
+                    $entityManagerName
+                )
+            );
+        }
+
+        return $entityManger;
+
     }
 
     private function initialize()
