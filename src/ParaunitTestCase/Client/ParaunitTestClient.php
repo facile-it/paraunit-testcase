@@ -23,15 +23,8 @@ class ParaunitTestClient extends Client
     {
         /** @var EntityManager $em */
         $em = $this->getContainer()->get('doctrine.orm.entity_manager');
-        if ( ! $em->isOpen()) {
-            throw new ORMException(sprintf(
-                'Entity manager is closed. I was trying to process a request [%s] %s',
-                $request->getMethod(),
-                $request->getRequestUri()
-            ));
-        }
 
-        $newEm = $em->create($em->getConnection(), $em->getConfiguration(), $em->getEventManager());
+        $newEm = $em->create($em->getConnection(), $em->getConfiguration());
         $this->getContainer()->set('doctrine.orm.entity_manager', $newEm);
 
         return $this->kernel->handle($request);
