@@ -101,36 +101,21 @@ abstract class ParaunitWebTestCase extends WebTestCase
 
     /**
      * Will return the entity manager.
-     * using the doctrine em naming convention will try to fetch the service
-     * doctrine.orm.{entityManagername}_entity_manager if exist.
+     * It's possible to pass the name of the entity manager, to fetch a non-default one
      *
-     * @param null $entityManagerName the name of the desired entity manager or null for the default one
-     *
+     * @param string $entityManagerName The name of the desired entity manager or null for the default one
      * @return EntityManagerInterface
-     *
+     * @throws \InvalidArgumentException If the entity manager (with that name) does not exist
      */
     protected function getEm($entityManagerName = null)
     {
-
-        if (!$entityManagerName){
+        if ( ! $entityManagerName){
             return $this->em;
         }
 
-        $entityManagerServiceName = 'doctrine.orm'.$entityManagerName.'_entity_manager';
-
-        $entityManger = $this->getContainer()->get($entityManagerServiceName, Container::NULL_ON_INVALID_REFERENCE);
-
-        if (!$entityManger instanceof EntityManagerInterface) {
-            throw new \BadMethodCallException(
-                sprintf(
-                    'There is no entity manager with the following name: %s. Please check your doctrine cofiguration',
-                    $entityManagerName
-                )
-            );
-        }
+        $entityManger = $this->getContainer()->get('doctrine')->getManager($entityManagerName);
 
         return $entityManger;
-
     }
 
     private function initialize()
