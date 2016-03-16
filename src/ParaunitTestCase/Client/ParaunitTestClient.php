@@ -2,6 +2,7 @@
 
 namespace ParaunitTestCase\Client;
 
+use Doctrine\Common\Persistence\ConnectionRegistry;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMException;
 use Symfony\Bundle\FrameworkBundle\Client;
@@ -21,12 +22,41 @@ class ParaunitTestClient extends Client
      */
     protected function doRequest($request)
     {
-        /** @var EntityManager $em */
-        $em = $this->getContainer()->get('doctrine.orm.entity_manager');
-
-        $newEm = $em->create($em->getConnection(), $em->getConfiguration());
-        $this->getContainer()->set('doctrine.orm.entity_manager', $newEm);
+        /** @var ConnectionRegistry $doctrine */
+        $doctrine = $this->getContainer()->get('doctrine');
+        foreach ($doctrine->getConnectionNames() as $connectionServiceName) {
+            $this->reloadEMWithSameTransaction($connectionServiceName);
+        }
 
         return $this->kernel->handle($request);
+    }
+
+    /**
+     * @param string $connectionServiceName
+     * @throws ORMException
+     */
+    private function reloadEMWithSameTransaction($connectionServiceName)
+    {
+        $connectionName = $this->extractConnectionName($connectionServiceName);
+        $doctrineName = 'doctrine.orm.' . $connectionName . '_entity_manager';
+        /** @var EntityManager $em */
+        $em = $this->getContainer()->get($doctrineName);
+
+        $newEm = $em->create($em->getConnection(), $em->getConfiguration());
+        $this->getContainer()->set($doctrineName, $newEm);
+    }
+
+    /**
+     * @param string $connectionServiceName
+     * @return string
+     */
+    private function extractConnectionName($connectionServiceName)
+    {
+        $matches = array();
+        if ( ! preg_match('/^doctrine\.dbal\.(.+)_connection$/', $connectionServiceName, $matches)) {
+            throw new \InvalidArgumentException('Non-standard Doctrine connection name: ' . $connectionServiceName);
+        }
+
+        return $matches[1];
     }
 }
