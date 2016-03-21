@@ -37,7 +37,7 @@
   },
   "autoload": {
     "psr-4": {
-      "": "src/"
+      "ParaunitTestCase": "src/ParaunitTestCase"
     }
   },
   "minimum-stability": "dev",

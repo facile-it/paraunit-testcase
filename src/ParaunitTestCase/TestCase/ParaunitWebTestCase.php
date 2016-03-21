@@ -2,12 +2,13 @@
 
 namespace ParaunitTestCase\TestCase;
 
+use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\ORMException;
 use Liip\FunctionalTestBundle\Test\WebTestCase;
 use ParaunitTestCase\Client\ParaunitTestClient;
 use Symfony\Bundle\FrameworkBundle\Client;
-use Symfony\Component\DependencyInjection\Container;
 
 /**
  * Class ParaUnitWebTestCase
@@ -16,22 +17,15 @@ use Symfony\Component\DependencyInjection\Container;
 abstract class ParaunitWebTestCase extends WebTestCase
 {
     /**
-     * @var EntityManagerInterface
-     */
-    protected $em;
-
-    /**
      * @param null $name
      * @param array $data
      * @param string $dataName
      */
-    public function __construct($name = NULL, array $data = array(), $dataName = '')
+    public function __construct($name = null, array $data = array(), $dataName = '')
     {
         ini_set('xdebug.max_nesting_level', 250);
 
         parent::__construct($name, $data, $dataName);
-
-        $this->initialize();
     }
 
     /**
@@ -41,8 +35,11 @@ abstract class ParaunitWebTestCase extends WebTestCase
     {
         parent::setUp();
 
-        $this->getEM()->getConnection()->setTransactionIsolation(Connection::TRANSACTION_READ_COMMITTED);
-        $this->getEM()->beginTransaction();
+        /** @var EntityManagerInterface $manager */
+        foreach ($this->getContainer()->get('doctrine')->getManagers() as $manager) {
+            $manager->getConnection()->setTransactionIsolation(Connection::TRANSACTION_READ_COMMITTED);
+            $manager->beginTransaction();
+        }
     }
 
     /**
@@ -50,13 +47,14 @@ abstract class ParaunitWebTestCase extends WebTestCase
      */
     public function tearDown()
     {
-        parent::tearDown();
-
-        if ($this->getEm()) {
-            $this->getEM()->rollback();
-            $conn = $this->getEm()->getConnection();
-            $conn->close();
+        /** @var EntityManagerInterface $manager */
+        foreach ($this->getContainer()->get('doctrine')->getManagers() as $manager) {
+            $manager->rollback();
+            $manager->close();
+            $manager->getConnection()->close();
         }
+
+        parent::tearDown();
     }
 
     /**
@@ -104,25 +102,19 @@ abstract class ParaunitWebTestCase extends WebTestCase
      * It's possible to pass the name of the entity manager, to fetch a non-default one
      *
      * @param string $entityManagerName The name of the desired entity manager or null for the default one
-     * @return EntityManagerInterface
+     * @return ObjectManager | EntityManagerInterface
      * @throws \InvalidArgumentException If the entity manager (with that name) does not exist
+     * @throws ORMException If the entity manager is closed
      */
     protected function getEm($entityManagerName = null)
     {
-        if ( ! $entityManagerName){
-            return $this->em;
-        }
-
+        /** @var EntityManagerInterface $entityManger */
         $entityManger = $this->getContainer()->get('doctrine')->getManager($entityManagerName);
 
+        if ($entityManger->isOpen()) {
+            throw ORMException::entityManagerClosed();
+        }
+
         return $entityManger;
-    }
-
-    private function initialize()
-    {
-        static::$kernel = static::createKernel();
-        static::$kernel->boot();
-
-        $this->em = $this->getContainer()->get('doctrine.orm.entity_manager');
     }
 }

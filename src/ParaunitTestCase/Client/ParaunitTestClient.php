@@ -2,9 +2,8 @@
 
 namespace ParaunitTestCase\Client;
 
-use Doctrine\Common\Persistence\ConnectionRegistry;
-use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\ORMException;
+use Doctrine\Common\Persistence\AbstractManagerRegistry;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Client;
 
 /**
@@ -14,7 +13,9 @@ use Symfony\Bundle\FrameworkBundle\Client;
 class ParaunitTestClient extends Client
 {
     /**
-     * This method does the trick: it's needed to make multiple requests without losing the transaction between them
+     * This method checks that the EM is still valid and avoids rebooting the kernel.
+     * The EM is cleared every time to avoid inconsistencies.
+     * If something broke the EntityManager, the connection is closed, to avoid further usage.
      *
      * @param \Symfony\Component\HttpFoundation\Request $request
      * @return \Symfony\Component\HttpFoundation\Response
@@ -22,41 +23,25 @@ class ParaunitTestClient extends Client
      */
     protected function doRequest($request)
     {
-        /** @var ConnectionRegistry $doctrine */
+        /** @var AbstractManagerRegistry $doctrine */
         $doctrine = $this->getContainer()->get('doctrine');
-        foreach ($doctrine->getConnectionNames() as $connectionServiceName) {
-            $this->reloadEMWithSameTransaction($connectionServiceName);
+        /** @var EntityManagerInterface $manager */
+        foreach ($doctrine->getManagers() as $manager) {
+            $this->handleManager($manager);
         }
 
         return $this->kernel->handle($request);
     }
 
     /**
-     * @param string $connectionServiceName
-     * @throws ORMException
+     * @param EntityManagerInterface $manager
      */
-    private function reloadEMWithSameTransaction($connectionServiceName)
+    private function handleManager(EntityManagerInterface $manager)
     {
-        $connectionName = $this->extractConnectionName($connectionServiceName);
-        $doctrineName = 'doctrine.orm.' . $connectionName . '_entity_manager';
-        /** @var EntityManager $em */
-        $em = $this->getContainer()->get($doctrineName);
+        $manager->clear();
 
-        $newEm = $em->create($em->getConnection(), $em->getConfiguration());
-        $this->getContainer()->set($doctrineName, $newEm);
-    }
-
-    /**
-     * @param string $connectionServiceName
-     * @return string
-     */
-    private function extractConnectionName($connectionServiceName)
-    {
-        $matches = array();
-        if ( ! preg_match('/^doctrine\.dbal\.(.+)_connection$/', $connectionServiceName, $matches)) {
-            throw new \InvalidArgumentException('Non-standard Doctrine connection name: ' . $connectionServiceName);
+        if ( ! $manager->isOpen()) {
+            $manager->getConnection()->close();
         }
-
-        return $matches[1];
     }
 }
