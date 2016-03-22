@@ -121,16 +121,16 @@ abstract class ParaunitWebTestCase extends WebTestCase
      * a failer request through the client that closed the previous EM.
      *
      * @param object $entity
-     * @param null $doctrineName
+     * @param string $entityManagerName The name of the EM where the entity is mapped, if not the default one
      * @throws \Exception
      */
-    protected function refreshEntityById(&$entity, $doctrineName = null)
+    protected function refreshEntity(&$entity, $entityManagerName = null)
     {
         if ( ! method_exists($entity, 'getId')) {
             $this->fail('Entity does not have getId(), cannot refresh it using a simple find()! Class: ' . get_class($entity));
         }
 
-        $em = $this->getEm($doctrineName);
+        $em = $this->getEm($entityManagerName);
 
         try {
             $repository = $em->getRepository(get_class($entity));
