@@ -40,8 +40,8 @@ abstract class ParaunitWebTestCase extends WebTestCase
         $doctrine = $this->getContainer()->get('doctrine');
 
         /** @var EntityManagerInterface $manager */
-        foreach ($doctrine->getConnectionNames() as $connectionName) {
-            $manager = $this->getCleanManager($connectionName);
+        foreach ($doctrine->getConnectionNames() as $connectionServiceName) {
+            $manager = $this->getCleanManager($connectionServiceName);
             $manager->clear();
             $manager->getConnection()->setTransactionIsolation(Connection::TRANSACTION_READ_COMMITTED);
             $manager->beginTransaction();
@@ -120,12 +120,12 @@ abstract class ParaunitWebTestCase extends WebTestCase
      * This function replaces the EM if closed, since the Liip TestCase caches the kernel, and it could contain
      * an EntityManager that was broken in the previous test inside the same test class
      *
-     * @param string $connectionName
+     * @param string $connectionServiceName
      * @return EntityManager
      */
-    private function getCleanManager($connectionName)
+    private function getCleanManager($connectionServiceName)
     {
-        $entityManagerName = 'doctrine.orm.' . $connectionName . '_entity_manager';
+        $entityManagerName = 'doctrine.orm.' . $this->extractConnectionName($connectionServiceName) . '_entity_manager';
         /** @var EntityManager $manager */
         $manager = $this->getContainer()->get($entityManagerName);
 
@@ -137,5 +137,19 @@ abstract class ParaunitWebTestCase extends WebTestCase
         }
 
         return $manager;
+    }
+
+    /**
+     * @param string $connectionServiceName
+     * @return string
+     */
+    private function extractConnectionName($connectionServiceName)
+    {
+        $matches = array();
+        if ( ! preg_match('/^doctrine\.dbal\.(.+)_connection$/', $connectionServiceName, $matches)) {
+            throw new \InvalidArgumentException('Non-standard Doctrine connection name: ' . $connectionServiceName);
+        }
+
+        return $matches[1];
     }
 }
