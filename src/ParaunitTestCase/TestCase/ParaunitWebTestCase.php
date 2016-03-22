@@ -2,10 +2,11 @@
 
 namespace ParaunitTestCase\TestCase;
 
+use Doctrine\Common\Persistence\ManagerRegistry;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\ORMException;
 use Liip\FunctionalTestBundle\Test\WebTestCase;
 use ParaunitTestCase\Client\ParaunitTestClient;
 use Symfony\Bundle\FrameworkBundle\Client;
@@ -35,8 +36,13 @@ abstract class ParaunitWebTestCase extends WebTestCase
     {
         parent::setUp();
 
+        /** @var ManagerRegistry $doctrine */
+        $doctrine = $this->getContainer()->get('doctrine');
+
         /** @var EntityManagerInterface $manager */
-        foreach ($this->getContainer()->get('doctrine')->getManagers() as $manager) {
+        foreach ($doctrine->getConnectionNames() as $connectionName) {
+            $manager = $this->getCleanManager($connectionName);
+            $manager->clear();
             $manager->getConnection()->setTransactionIsolation(Connection::TRANSACTION_READ_COMMITTED);
             $manager->beginTransaction();
         }
@@ -66,7 +72,7 @@ abstract class ParaunitWebTestCase extends WebTestCase
     {
         $client = new ParaunitTestClient($this->getContainer()->get('kernel'), array(
             'PHP_AUTH_USER' => $username,
-            'PHP_AUTH_PW'   => $password,
+            'PHP_AUTH_PW' => $password,
         ));
 
         $this->prepareAuthorizedClient($client, $username, $password);
@@ -104,17 +110,32 @@ abstract class ParaunitWebTestCase extends WebTestCase
      * @param string $entityManagerName The name of the desired entity manager or null for the default one
      * @return ObjectManager | EntityManagerInterface
      * @throws \InvalidArgumentException If the entity manager (with that name) does not exist
-     * @throws ORMException If the entity manager is closed
      */
     protected function getEm($entityManagerName = null)
     {
-        /** @var EntityManagerInterface $entityManger */
-        $entityManger = $this->getContainer()->get('doctrine')->getManager($entityManagerName);
+        return $this->getContainer()->get('doctrine')->getManager($entityManagerName);
+    }
 
-        if ($entityManger->isOpen()) {
-            throw ORMException::entityManagerClosed();
+    /**
+     * This function replaces the EM if closed, since the Liip TestCase caches the kernel, and it could contain
+     * an EntityManager that was broken in the previous test inside the same test class
+     *
+     * @param string $connectionName
+     * @return EntityManager
+     */
+    private function getCleanManager($connectionName)
+    {
+        $entityManagerName = 'doctrine.orm.' . $connectionName . '_entity_manager';
+        /** @var EntityManager $manager */
+        $manager = $this->getContainer()->get($entityManagerName);
+
+        if ( ! $manager->isOpen()) {
+            $newManager = EntityManager::create($manager->getConnection()->getParams(), $manager->getConfiguration());
+            $this->getContainer()->set($entityManagerName, $newManager);
+            $manager->getConnection()->close();
+            $manager = $newManager;
         }
 
-        return $entityManger;
+        return $manager;
     }
 }
