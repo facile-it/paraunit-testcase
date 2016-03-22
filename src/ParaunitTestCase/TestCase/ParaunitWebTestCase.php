@@ -117,6 +117,31 @@ abstract class ParaunitWebTestCase extends WebTestCase
     }
 
     /**
+     * This method is usable to refresh a previous fetched entity. It need to be called between EMs changes, like after
+     * a failer request through the client that closed the previous EM.
+     *
+     * @param object $entity
+     * @param null $doctrineName
+     * @throws \Exception
+     */
+    protected function refreshEntityById(&$entity, $doctrineName = null)
+    {
+        if ( ! method_exists($entity, 'getId')) {
+            $this->fail('Entity does not have getId(), cannot refresh it using a simple find()! Class: ' . get_class($entity));
+        }
+
+        $em = $this->getEm($doctrineName);
+
+        try {
+            $repository = $em->getRepository(get_class($entity));
+        } catch (MappingException $exception) {
+            throw new \Exception('Error while trying to refresh object which is not a registered entity: ' . get_class($entity), null, $exception);
+        }
+
+        $entity = $repository->find($entity->getId());
+    }
+
+    /**
      * This function replaces the EM if closed, since the Liip TestCase caches the kernel, and it could contain
      * an EntityManager that was broken in the previous test inside the same test class
      *
