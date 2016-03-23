@@ -18,11 +18,15 @@ class ParaunitTestClient extends Client
      * If something broke the EntityManager, the connection is closed, to avoid further usage.
      *
      * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param bool $rebootKernel If true, reboots the kernel anyway: needed when the container has stale services
      * @return \Symfony\Component\HttpFoundation\Response
-     * @throws \Doctrine\ORM\ORMException
      */
-    protected function doRequest($request)
+    protected function doRequest($request, $rebootKernel = false)
     {
+        if ($rebootKernel) {
+            return parent::doRequest($request);
+        }
+
         /** @var AbstractManagerRegistry $doctrine */
         $doctrine = $this->getContainer()->get('doctrine');
         /** @var EntityManagerInterface $manager */
