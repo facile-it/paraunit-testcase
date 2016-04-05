@@ -12,12 +12,6 @@ use Symfony\Bundle\FrameworkBundle\Client;
  */
 class ParaunitTestClient extends Client
 {
-    public function rebootKernel()
-    {
-        $this->kernel->shutdown();
-        $this->kernel->boot();
-    }
-
     /**
      * This method checks that the EM is still valid and avoids rebooting the kernel.
      * The EM is cleared every time to avoid inconsistencies.
@@ -46,7 +40,9 @@ class ParaunitTestClient extends Client
         $manager->clear();
 
         if ( ! $manager->isOpen()) {
-            $manager->getConnection()->close();
+            throw new \RuntimeException(
+                'The EntityManager was closed before the request. Check your test or if previous request broke it'
+            );
         }
     }
 }

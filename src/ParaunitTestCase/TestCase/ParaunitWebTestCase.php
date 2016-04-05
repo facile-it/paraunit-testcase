@@ -143,15 +143,6 @@ abstract class ParaunitWebTestCase extends WebTestCase
     }
 
     /**
-     * This methods clears all the cached containers. In this way we can circumvent false failures of tests because a
-     * service mantains state between multiple requests. (ex.: EntityType in forms, they cache the list of values)
-     */
-    protected function invalidateContainerCache()
-    {
-        $this->containers = array();
-    }
-
-    /**
      * This function replaces the EM if closed, since the Liip TestCase caches the kernel, and it could contain
      * an EntityManager that was broken in the previous test inside the same test class
      *
@@ -165,7 +156,7 @@ abstract class ParaunitWebTestCase extends WebTestCase
         $manager = $this->getContainer()->get($entityManagerName);
 
         if ( ! $manager->isOpen()) {
-            $newManager = EntityManager::create($manager->getConnection()->getParams(), $manager->getConfiguration());
+            $newManager = EntityManager::create($manager->getConnection(), $manager->getConfiguration());
             $this->getContainer()->set($entityManagerName, $newManager);
             $manager->getConnection()->close();
             $manager = $newManager;
