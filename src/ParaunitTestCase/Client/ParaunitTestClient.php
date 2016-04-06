@@ -30,7 +30,7 @@ class ParaunitTestClient extends Client
     /**
      * This method checks that the EM is still valid and avoids rebooting the kernel.
      * The EM is cleared every time to avoid inconsistencies.
-     * If something broke the EntityManager, or if some Doctrine-related stateful service is breaking your test,
+     * If something broke the EntityManager, or if some stateful, Doctrine-related service is breaking your test,
      * you should explicitly reboot the kernel BEFORE the request, using the rebootKernel() method
      *
      * @param \Symfony\Component\HttpFoundation\Request $request
