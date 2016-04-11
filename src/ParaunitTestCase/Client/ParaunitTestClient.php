@@ -3,9 +3,7 @@
 namespace ParaunitTestCase\Client;
 
 use Doctrine\Common\Persistence\AbstractManagerRegistry;
-use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Client;
 
 /**
@@ -14,73 +12,78 @@ use Symfony\Bundle\FrameworkBundle\Client;
  */
 class ParaunitTestClient extends Client
 {
-    /**
-     * This function reboots the Client's kernel preserving the underlying
-     */
-    public function rebootKernel()
+    /** @var  bool */
+    private $reboot = false;
+
+    public function enableKernelRebootBeforeRequest()
     {
-        $connections = $this->getDoctrineConnections();
-
-        $this->kernel->shutdown();
-        $this->kernel->boot();
-
-        $this->reinjectDoctrineConnections($connections);
+        $this->reboot = true;
     }
 
     /**
-     * This method checks that the EM is still valid and avoids rebooting the kernel.
-     * The EM is cleared every time to avoid inconsistencies.
+     * The EM is cleared every time to avoid inconsistencies in the test environment.
+     *
+     * This method avoids rebooting the kernel until explicitly requested, to reduce test execution time.
      * If something broke the EntityManager, or if some stateful, Doctrine-related service is breaking your test,
-     * you should explicitly reboot the kernel BEFORE the request, using the rebootKernel() method
+     * you should use the enableKernelRebootBeforeRequest() method to request a kernel reboot.
      *
      * @param \Symfony\Component\HttpFoundation\Request $request
      * @return \Symfony\Component\HttpFoundation\Response
      */
     protected function doRequest($request)
     {
-        /** @var EntityManagerInterface $manager */
-        foreach ($this->getDoctrine()->getManagers() as $manager) {
-            $this->clearManager($manager);
+        if ($this->reboot) {
+            $managers = $this->getDoctrineManagers();
+
+            $this->kernel->shutdown();
+            $this->kernel->boot();
+
+            $this->reinjectDoctrineManagers($managers);
         }
+
+        $this->clearAllManagers();
 
         return $this->kernel->handle($request);
     }
 
-    /**
-     * @param EntityManagerInterface $manager
-     */
-    private function clearManager(EntityManagerInterface $manager)
+    private function clearAllManagers()
     {
-        $manager->clear();
+        /** @var EntityManager $manager */
+        foreach ($this->getDoctrine()->getManagers() as $manager) {
+            $manager->clear();
 
-        if ( ! $manager->isOpen()) {
-            throw new \RuntimeException(
-                'The EntityManager was closed before the request. Check if a previous request broke it. You can also try to explicitly reboot the kernel before the request'
-            );
+            if ( ! $manager->isOpen()) {
+                throw new \RuntimeException(
+                    'The EntityManager was closed before the request. Check if a previous request broke it. You can also try to explicitly reboot the kernel before the request'
+                );
+            }
         }
     }
 
     /**
-     * @return array | Connection[]
+     * @return array | EntityManager[]
      */
-    private function getDoctrineConnections()
+    private function getDoctrineManagers()
     {
-        $connections = [];
+        $managers = [];
 
-        foreach ($this->getDoctrine()->getConnectionNames() as $connectionName) {
-            $connections[$connectionName] = $this->getContainer()->get($connectionName);
+        foreach ($this->getDoctrine()->getConnectionNames() as $connectionServiceName) {
+            $managerServiceName = 'doctrine.orm.' . $this->extractConnectionName($connectionServiceName) . '_entity_manager';
+            $managers[$managerServiceName] = $this->getContainer()->get($managerServiceName);
         }
-        
-        return $connections;
+
+        return $managers;
     }
 
     /**
-     * @param array | Connection[] $connections
+     * @param array | EntityManager[] $entityManagers
      */
-    private function reinjectDoctrineConnections(array $connections)
+    private function reinjectDoctrineManagers(array $entityManagers)
     {
-        foreach ($connections as $name => $connection) {
-            $this->replaceManagerWithPreviousConnection($connection, $name);
+        $container = $this->getContainer();
+
+        foreach ($entityManagers as $name => $entityManager) {
+            $container->set($name, $entityManager);
         }
     }
 
@@ -90,24 +93,6 @@ class ParaunitTestClient extends Client
     private function getDoctrine()
     {
         return $this->getContainer()->get('doctrine');
-    }
-
-    /**
-     * @param Connection $connection
-     * @param string $connectionName
-     * @throws \Doctrine\ORM\ORMException
-     */
-    private function replaceManagerWithPreviousConnection($connection, $connectionName)
-    {
-        $name = $this->extractConnectionName($connectionName);
-        $entityManagerName = 'doctrine.orm.' . $name . '_entity_manager';
-        /** @var EntityManager $oldEntityManager */
-        $oldEntityManager = $this->getContainer()->get($entityManagerName);
-
-        $this->getContainer()->set(
-            $entityManagerName,
-            EntityManager::create($connection, $oldEntityManager->getConfiguration())
-        );
     }
 
     /**

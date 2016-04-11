@@ -67,26 +67,50 @@ abstract class ParaunitWebTestCase extends WebTestCase
     /**
      * @param string $username
      * @param string $password
-     * @return Client | ParaunitTestClient
+     * @return ParaunitTestClient
      */
     protected function getAuthorizedClient($username, $password)
     {
-        $client = new ParaunitTestClient($this->getContainer()->get('kernel'), array(
-            'PHP_AUTH_USER' => $username,
-            'PHP_AUTH_PW' => $password,
-        ));
+        /** @var ParaunitTestClient $client */
+        $client = $this->makeClient([
+            'username' => $username,
+            'password' => $password,
+        ]);
 
-        $this->prepareAuthorizedClient($client, $username, $password);
+        $this->injectManagersInClient($client);
 
         return $client;
     }
 
     /**
-     * @return Client | ParaunitTestClient
+     * @return ParaunitTestClient
      */
     protected function getUnauthorizedClient()
     {
-        return new ParaunitTestClient($this->getContainer()->get('kernel'), array());
+        /** @var ParaunitTestClient $client */
+        $client = $this->makeClient();
+
+        $this->injectManagersInClient($client);
+
+        return $client;
+    }
+
+    /**
+     * Overrides the original method to use out client class inside the makeClient() function
+     *
+     * @param array $options An array of options to pass to the createKernel class
+     * @param array $server  An array of server parameters
+     *
+     * @return ParaunitTestClient A Client instance
+     */
+    protected static function createClient(array $options = array(), array $server = array())
+    {
+        static::bootKernel($options);
+
+        $client = new ParaunitTestClient(static::$kernel);
+        $client->setServerParameters($server);
+
+        return $client;
     }
 
     /**
@@ -177,5 +201,23 @@ abstract class ParaunitWebTestCase extends WebTestCase
         }
 
         return $matches[1];
+    }
+
+    /**
+     * @param ParaunitTestClient $client
+     */
+    private function injectManagersInClient(ParaunitTestClient $client)
+    {
+        $clientContainer = $client->getContainer();
+        $testContainer = $this->getContainer();
+
+        /** @var ManagerRegistry $doctrine */
+        $doctrine = $this->getContainer()->get('doctrine');
+
+        /** @var EntityManagerInterface $manager */
+        foreach ($doctrine->getConnectionNames() as $connectionServiceName) {
+            $entityManagerName = 'doctrine.orm.' . $this->extractConnectionName($connectionServiceName) . '_entity_manager';
+            $clientContainer->set($entityManagerName, $testContainer->get($entityManagerName));
+        }
     }
 }
