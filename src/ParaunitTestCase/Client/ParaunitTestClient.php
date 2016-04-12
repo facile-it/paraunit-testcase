@@ -43,7 +43,11 @@ class ParaunitTestClient extends Client
 
         $this->clearAllManagers();
 
-        return $this->kernel->handle($request);
+        $result = $this->kernel->handle($request);
+
+        $this->checkAllManagersForDeadlocks();
+
+        return $result;
     }
 
     private function clearAllManagers()
@@ -57,8 +61,13 @@ class ParaunitTestClient extends Client
                     'The EntityManager was closed before the request. Check if a previous request broke it. You can also try to explicitly reboot the kernel before the request'
                 );
             }
+        }
+    }
 
-
+    private function checkAllManagersForDeadlocks()
+    {
+        /** @var EntityManager $manager */
+        foreach ($this->getDoctrine()->getManagers() as $manager) {
             $errorMessage = $manager->getConnection()->errorInfo();
             if ($errorMessage) {
                 throw new \RuntimeException(
