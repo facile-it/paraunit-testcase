@@ -142,13 +142,7 @@ abstract class ParaunitWebTestCase extends WebTestCase
 
         $em = $this->getEm($entityManagerName);
 
-        try {
-            $repository = $em->getRepository(get_class($entity));
-        } catch (MappingException $exception) {
-            throw new \Exception('Error while trying to refresh object which is not a registered entity: ' . get_class($entity), null, $exception);
-        }
-
-        $entity = $repository->find($entity->getId()); // forced managed
+        $entity = $em->find(get_class($entity), $entity->getId()); // forced manage
         $this->getEm()->refresh($entity); // forced refresh
     }
 

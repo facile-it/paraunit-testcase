@@ -57,6 +57,14 @@ class ParaunitTestClient extends Client
                     'The EntityManager was closed before the request. Check if a previous request broke it. You can also try to explicitly reboot the kernel before the request'
                 );
             }
+
+
+            $errorMessage = $manager->getConnection()->errorInfo();
+            if ($errorMessage) {
+                throw new \RuntimeException(
+                    'The EntityManager encountered a probable deadlock: ' . $errorMessage
+                );
+            }
         }
     }
 
