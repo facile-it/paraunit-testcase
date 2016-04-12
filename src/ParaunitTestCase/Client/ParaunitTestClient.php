@@ -69,9 +69,9 @@ class ParaunitTestClient extends Client
         /** @var EntityManager $manager */
         foreach ($this->getDoctrine()->getManagers() as $manager) {
             $errorMessage = $manager->getConnection()->errorInfo();
-            if ($errorMessage) {
+            if (count($errorMessage) > 1 && $errorMessage[1]) {
                 throw new \RuntimeException(
-                    'The EntityManager encountered a probable deadlock: ' . $errorMessage
+                    'The EntityManager encountered a probable deadlock: ' . $errorMessage[1]
                 );
             }
         }
