@@ -114,21 +114,6 @@ abstract class ParaunitWebTestCase extends WebTestCase
     }
 
     /**
-     * Hook for client advanced authentication
-     *
-     * Use this method (and ovveride it) if you need to do something else beside the simple
-     * HTTP authentication when you call the self::getAuthorizedClient() method
-     *
-     * @param Client $client
-     * @param string $username
-     * @param string $password
-     */
-    protected function prepareAuthorizedClient(Client $client, $username, $password)
-    {
-        // override me!
-    }
-
-    /**
      * Will return the entity manager.
      * It's possible to pass the name of the entity manager, to fetch a non-default one
      *
@@ -163,7 +148,8 @@ abstract class ParaunitWebTestCase extends WebTestCase
             throw new \Exception('Error while trying to refresh object which is not a registered entity: ' . get_class($entity), null, $exception);
         }
 
-        $entity = $repository->find($entity->getId());
+        $entity = $repository->find($entity->getId()); // forced managed
+        $this->getEm()->refresh($entity); // forced refresh
     }
 
     /**
