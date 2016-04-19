@@ -3,6 +3,7 @@
 namespace ParaunitTestCase\Client;
 
 use Doctrine\Common\Persistence\AbstractManagerRegistry;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManager;
 use Symfony\Bundle\FrameworkBundle\Client;
 
@@ -98,9 +99,19 @@ class ParaunitTestClient extends Client
     private function reinjectDoctrineManagers(array $entityManagers)
     {
         $container = $this->getContainer();
+        $reflectionProperty = new \ReflectionProperty(Connection::class, '_conn');
 
         foreach ($entityManagers as $name => $entityManager) {
-            $container->set($name, $entityManager);
+            /** @var EntityManager $newEntityManager */
+            $newEntityManager = $container->get($name);
+            $newConnection = $newEntityManager->getConnection();
+            
+            $newConnection->setTransactionIsolation(Connection::TRANSACTION_READ_COMMITTED);
+            $newEntityManager->beginTransaction();
+
+            $reflectionProperty->setAccessible(true);
+            $reflectionProperty->setValue($newConnection, $entityManager->getConnection()->getWrappedConnection());
+            $reflectionProperty->setAccessible(false);
         }
     }
 

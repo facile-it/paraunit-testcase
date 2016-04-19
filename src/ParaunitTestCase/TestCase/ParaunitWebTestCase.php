@@ -41,8 +41,8 @@ abstract class ParaunitWebTestCase extends WebTestCase
         $doctrine = $this->getContainer()->get('doctrine');
 
         /** @var EntityManagerInterface $manager */
-        foreach ($doctrine->getConnectionNames() as $connectionServiceName) {
-            $manager = $this->getCleanManager($connectionServiceName);
+        foreach ($doctrine->getManagerNames() as $managerName) {
+            $manager = $this->getCleanManager($managerName);
             $manager->clear();
             $manager->getConnection()->setTransactionIsolation(Connection::TRANSACTION_READ_COMMITTED);
             $manager->beginTransaction();
@@ -150,18 +150,17 @@ abstract class ParaunitWebTestCase extends WebTestCase
      * This function replaces the EM if closed, since the Liip TestCase caches the kernel, and it could contain
      * an EntityManager that was broken in the previous test inside the same test class
      *
-     * @param string $connectionServiceName
+     * @param string $managerName
      * @return EntityManager
      */
-    private function getCleanManager($connectionServiceName)
+    private function getCleanManager($managerName)
     {
-        $entityManagerName = 'doctrine.orm.' . $this->extractConnectionName($connectionServiceName) . '_entity_manager';
         /** @var EntityManager $manager */
-        $manager = $this->getContainer()->get($entityManagerName);
+        $manager = $this->getContainer()->get($managerName);
 
         if ( ! $manager->isOpen()) {
             $newManager = EntityManager::create($manager->getConnection(), $manager->getConfiguration());
-            $this->getContainer()->set($entityManagerName, $newManager);
+            $this->getContainer()->set($managerName, $newManager);
             $manager->getConnection()->close();
             $manager = $newManager;
         }
@@ -170,34 +169,28 @@ abstract class ParaunitWebTestCase extends WebTestCase
     }
 
     /**
-     * @param string $connectionServiceName
-     * @return string
-     */
-    private function extractConnectionName($connectionServiceName)
-    {
-        $matches = array();
-        if ( ! preg_match('/^doctrine\.dbal\.(.+)_connection$/', $connectionServiceName, $matches)) {
-            throw new \InvalidArgumentException('Non-standard Doctrine connection name: ' . $connectionServiceName);
-        }
-
-        return $matches[1];
-    }
-
-    /**
      * @param ParaunitTestClient $client
      */
     private function injectManagersInClient(ParaunitTestClient $client)
     {
-        $clientContainer = $client->getContainer();
-        $testContainer = $this->getContainer();
-
         /** @var ManagerRegistry $doctrine */
         $doctrine = $this->getContainer()->get('doctrine');
+        $reflectionProperty = new \ReflectionProperty(Connection::class, '_conn');
+        $clientContainer = $client->getContainer();
 
         /** @var EntityManagerInterface $manager */
-        foreach ($doctrine->getConnectionNames() as $connectionServiceName) {
-            $entityManagerName = 'doctrine.orm.' . $this->extractConnectionName($connectionServiceName) . '_entity_manager';
-            $clientContainer->set($entityManagerName, $testContainer->get($entityManagerName));
+        foreach ($doctrine->getManagerNames() as $entityManagerName) {
+            /** @var EntityManager $entityManager */
+            $entityManager = $clientContainer->get($entityManagerName);
+            /** @var Connection $newConnection */
+            $newConnection = $this->getContainer()->get($entityManagerName)->getConnection();
+
+            $newConnection->setTransactionIsolation(Connection::TRANSACTION_READ_COMMITTED);
+            $entityManager->beginTransaction();
+
+            $reflectionProperty->setAccessible(true);
+            $reflectionProperty->setValue($newConnection, $entityManager->getConnection()->getWrappedConnection());
+            $reflectionProperty->setAccessible(false);
         }
     }
 }
