@@ -58,7 +58,11 @@ abstract class ParaunitWebTestCase extends WebTestCase
         foreach ($this->getContainer()->get('doctrine')->getManagers() as $manager) {
             $manager->rollback();
             $manager->close();
-            $manager->getConnection()->close();
+
+            $connection = $manager->getConnection()->getWrappedConnection();
+            if ($connection instanceof \ParaunitTestCase\Connection\Connection) {
+                $connection ->closeForReal();
+            }
         }
 
         parent::tearDown();

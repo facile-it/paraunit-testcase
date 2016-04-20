@@ -18,4 +18,12 @@ class Connection extends \Doctrine\DBAL\Connection
     {
         // Nope!
     }
+
+    /**
+     * This method can be called to explicitly close the connection
+     */
+    public function closeForReal()
+    {
+        parent::close();
+    }
 }

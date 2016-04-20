@@ -39,9 +39,10 @@ class ParaunitTestClient extends Client
             $this->kernel->shutdown();
             $this->kernel->boot();
 
-            $this->reinjectDoctrineManagers($managers);
+            $this->reinjectDbConnections($managers);
         }
 
+        $this->checkAllManagersForDeadlocks();
         $this->clearAllManagers();
 
         $result = $this->kernel->handle($request);
@@ -96,7 +97,7 @@ class ParaunitTestClient extends Client
     /**
      * @param array | EntityManager[] $entityManagers
      */
-    private function reinjectDoctrineManagers(array $entityManagers)
+    private function reinjectDbConnections(array $entityManagers)
     {
         $container = $this->getContainer();
         $reflectionProperty = new \ReflectionProperty(Connection::class, '_conn');
@@ -104,6 +105,7 @@ class ParaunitTestClient extends Client
         foreach ($entityManagers as $name => $entityManager) {
             /** @var EntityManager $newEntityManager */
             $newEntityManager = $container->get($name);
+            $oldConnection = $entityManager->getConnection()->getWrappedConnection();
             $newConnection = $newEntityManager->getConnection();
             
             $newConnection->setTransactionIsolation(Connection::TRANSACTION_READ_COMMITTED);
@@ -112,6 +114,10 @@ class ParaunitTestClient extends Client
             $reflectionProperty->setAccessible(true);
             $reflectionProperty->setValue($newConnection, $entityManager->getConnection()->getWrappedConnection());
             $reflectionProperty->setAccessible(false);
+            
+            if ($oldConnection instanceof \ParaunitTestCase\Connection\Connection) {
+                $oldConnection->closeForReal();
+            }
         }
     }
 
