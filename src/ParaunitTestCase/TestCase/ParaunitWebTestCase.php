@@ -184,16 +184,18 @@ abstract class ParaunitWebTestCase extends WebTestCase
 
         /** @var EntityManagerInterface $manager */
         foreach ($doctrine->getManagerNames() as $entityManagerName) {
-            /** @var EntityManager $entityManager */
-            $entityManager = $clientContainer->get($entityManagerName);
-            /** @var Connection $newConnection */
-            $newConnection = $this->getContainer()->get($entityManagerName)->getConnection();
+            /** @var EntityManager $clientEntityManager */
+            $clientEntityManager = $clientContainer->get($entityManagerName);
+            /** @var Connection $connection */
+            $connection = $this->getContainer()->get($entityManagerName)->getConnection();
+            $this->assertEquals(1, $connection->getTransactionNestingLevel(), 'Wrong level of transaction level');
 
-            $newConnection->setTransactionIsolation(Connection::TRANSACTION_READ_COMMITTED);
-            $entityManager->beginTransaction();
+            $clientConnection = $clientEntityManager->getConnection();
+            $clientConnection->setTransactionIsolation(Connection::TRANSACTION_READ_COMMITTED);
+            $clientEntityManager->beginTransaction();
 
             $reflectionProperty->setAccessible(true);
-            $reflectionProperty->setValue($newConnection, $entityManager->getConnection()->getWrappedConnection());
+            $reflectionProperty->setValue($clientConnection, $connection->getWrappedConnection());
             $reflectionProperty->setAccessible(false);
         }
     }
