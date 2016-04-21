@@ -59,9 +59,9 @@ abstract class ParaunitWebTestCase extends WebTestCase
             $manager->rollback();
             $manager->close();
 
-            $connection = $manager->getConnection()->getWrappedConnection();
-            if ($connection instanceof \ParaunitTestCase\Connection\Connection) {
-                $connection ->closeForReal();
+            $connection = $manager->getConnection();
+            if (method_exists($connection, 'close')) {
+                $connection->close();
             }
         }
 

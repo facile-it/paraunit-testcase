@@ -105,18 +105,18 @@ class ParaunitTestClient extends Client
         foreach ($entityManagers as $name => $entityManager) {
             /** @var EntityManager $newEntityManager */
             $newEntityManager = $container->get($name);
-            $oldConnection = $entityManager->getConnection()->getWrappedConnection();
             $newConnection = $newEntityManager->getConnection();
-            
+            $unusedWrappedConnection = $newConnection->getWrappedConnection();
+
             $newConnection->setTransactionIsolation(Connection::TRANSACTION_READ_COMMITTED);
             $newEntityManager->beginTransaction();
 
             $reflectionProperty->setAccessible(true);
             $reflectionProperty->setValue($newConnection, $entityManager->getConnection()->getWrappedConnection());
             $reflectionProperty->setAccessible(false);
-            
-            if ($oldConnection instanceof \ParaunitTestCase\Connection\Connection) {
-                $oldConnection->closeForReal();
+
+            if (method_exists($unusedWrappedConnection, 'close')) {
+                $unusedWrappedConnection->close();
             }
         }
     }
