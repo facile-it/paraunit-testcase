@@ -60,7 +60,9 @@ abstract class ParaunitWebTestCase extends WebTestCase
             $manager->close();
 
             $connection = $manager->getConnection();
-            if (method_exists($connection, 'close')) {
+            if ($connection instanceof \ParaunitTestCase\Connection\Connection) {
+                $connection->closeForReal();
+            } else if (method_exists($connection, 'close')) {
                 $connection->close();
             }
         }
