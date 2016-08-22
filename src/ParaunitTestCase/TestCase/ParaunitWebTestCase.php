@@ -41,8 +41,8 @@ abstract class ParaunitWebTestCase extends WebTestCase
         $doctrine = $this->getContainer()->get('doctrine');
 
         /** @var EntityManagerInterface $manager */
-        foreach ($doctrine->getConnectionNames() as $connectionServiceName) {
-            $manager = $this->getCleanManager($connectionServiceName);
+        foreach ($doctrine->getManagerNames() as $managerName) {
+            $manager = $this->getCleanManager($managerName);
             $manager->clear();
             $manager->getConnection()->setTransactionIsolation(Connection::TRANSACTION_READ_COMMITTED);
             $manager->beginTransaction();
@@ -58,7 +58,13 @@ abstract class ParaunitWebTestCase extends WebTestCase
         foreach ($this->getContainer()->get('doctrine')->getManagers() as $manager) {
             $manager->rollback();
             $manager->close();
-            $manager->getConnection()->close();
+
+            $connection = $manager->getConnection();
+            if ($connection instanceof \ParaunitTestCase\Connection\Connection) {
+                $connection->closeForReal();
+            } else if (method_exists($connection, 'close')) {
+                $connection->close();
+            }
         }
 
         parent::tearDown();
@@ -67,41 +73,50 @@ abstract class ParaunitWebTestCase extends WebTestCase
     /**
      * @param string $username
      * @param string $password
-     * @return Client | ParaunitTestClient
+     * @return ParaunitTestClient
      */
     protected function getAuthorizedClient($username, $password)
     {
-        $client = new ParaunitTestClient($this->getContainer()->get('kernel'), array(
-            'PHP_AUTH_USER' => $username,
-            'PHP_AUTH_PW' => $password,
-        ));
+        /** @var ParaunitTestClient $client */
+        $client = $this->makeClient([
+            'username' => $username,
+            'password' => $password,
+        ]);
 
-        $this->prepareAuthorizedClient($client, $username, $password);
+        $this->injectManagersInClient($client);
 
         return $client;
     }
 
     /**
-     * @return Client | ParaunitTestClient
+     * @return ParaunitTestClient
      */
     protected function getUnauthorizedClient()
     {
-        return new ParaunitTestClient($this->getContainer()->get('kernel'), array());
+        /** @var ParaunitTestClient $client */
+        $client = $this->makeClient();
+
+        $this->injectManagersInClient($client);
+
+        return $client;
     }
 
     /**
-     * Hook for client advanced authentication
+     * Overrides the original method to use out client class inside the makeClient() function
      *
-     * Use this method (and ovveride it) if you need to do something else beside the simple
-     * HTTP authentication when you call the self::getAuthorizedClient() method
+     * @param array $options An array of options to pass to the createKernel class
+     * @param array $server  An array of server parameters
      *
-     * @param Client $client
-     * @param string $username
-     * @param string $password
+     * @return ParaunitTestClient A Client instance
      */
-    protected function prepareAuthorizedClient(Client $client, $username, $password)
+    protected static function createClient(array $options = array(), array $server = array())
     {
-        // override me!
+        static::bootKernel($options);
+
+        $client = new ParaunitTestClient(static::$kernel);
+        $client->setServerParameters($server);
+
+        return $client;
     }
 
     /**
@@ -133,31 +148,25 @@ abstract class ParaunitWebTestCase extends WebTestCase
 
         $em = $this->getEm($entityManagerName);
 
-        try {
-            $repository = $em->getRepository(get_class($entity));
-        } catch (MappingException $exception) {
-            throw new \Exception('Error while trying to refresh object which is not a registered entity: ' . get_class($entity), null, $exception);
-        }
-
-        $entity = $repository->find($entity->getId());
+        $entity = $em->find(get_class($entity), $entity->getId()); // forced manage
+        $this->getEm()->refresh($entity); // forced refresh
     }
 
     /**
      * This function replaces the EM if closed, since the Liip TestCase caches the kernel, and it could contain
      * an EntityManager that was broken in the previous test inside the same test class
      *
-     * @param string $connectionServiceName
+     * @param string $managerName
      * @return EntityManager
      */
-    private function getCleanManager($connectionServiceName)
+    private function getCleanManager($managerName)
     {
-        $entityManagerName = 'doctrine.orm.' . $this->extractConnectionName($connectionServiceName) . '_entity_manager';
         /** @var EntityManager $manager */
-        $manager = $this->getContainer()->get($entityManagerName);
+        $manager = $this->getContainer()->get($managerName);
 
         if ( ! $manager->isOpen()) {
             $newManager = EntityManager::create($manager->getConnection(), $manager->getConfiguration());
-            $this->getContainer()->set($entityManagerName, $newManager);
+            $this->getContainer()->set($managerName, $newManager);
             $manager->getConnection()->close();
             $manager = $newManager;
         }
@@ -166,16 +175,30 @@ abstract class ParaunitWebTestCase extends WebTestCase
     }
 
     /**
-     * @param string $connectionServiceName
-     * @return string
+     * @param ParaunitTestClient $client
      */
-    private function extractConnectionName($connectionServiceName)
+    private function injectManagersInClient(ParaunitTestClient $client)
     {
-        $matches = array();
-        if ( ! preg_match('/^doctrine\.dbal\.(.+)_connection$/', $connectionServiceName, $matches)) {
-            throw new \InvalidArgumentException('Non-standard Doctrine connection name: ' . $connectionServiceName);
-        }
+        /** @var ManagerRegistry $doctrine */
+        $doctrine = $this->getContainer()->get('doctrine');
+        $reflectionProperty = new \ReflectionProperty(Connection::class, '_conn');
+        $clientContainer = $client->getContainer();
 
-        return $matches[1];
+        /** @var EntityManagerInterface $manager */
+        foreach ($doctrine->getManagerNames() as $entityManagerName) {
+            /** @var EntityManager $clientEntityManager */
+            $clientEntityManager = $clientContainer->get($entityManagerName);
+            /** @var Connection $connection */
+            $connection = $this->getContainer()->get($entityManagerName)->getConnection();
+            $this->assertEquals(1, $connection->getTransactionNestingLevel(), 'Wrong level of transaction level');
+
+            $clientConnection = $clientEntityManager->getConnection();
+            $clientConnection->setTransactionIsolation(Connection::TRANSACTION_READ_COMMITTED);
+            $clientEntityManager->beginTransaction();
+
+            $reflectionProperty->setAccessible(true);
+            $reflectionProperty->setValue($clientConnection, $connection->getWrappedConnection());
+            $reflectionProperty->setAccessible(false);
+        }
     }
 }
