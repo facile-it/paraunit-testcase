@@ -46,6 +46,9 @@ The TestCase also provides some utility methods:
  * `getEM()`: Doctrine's Entity Manager (transactional)
  * `getUnauthorizedClient()`: extended Symfony HTTP client, for controller testing (it can read inside the transaction, even between multiple requests)
  * `getAuthorizedClient($user, $password)`: same as before, but with HTTP basic authentication
+ * `refreshEntity(&$entity, $entityManagerName = null)`: shortcut for refreshing an entity, re-fetching all the data 
+ from the database; really useful if you need to run some assertion on an entity and you want to be sure to read the data
+ as persisted/rollbacked on the database.
 
 ##Advanced usage
 It's possible to extend `ParaunitWebTestCase` more before using it as your base test case:
