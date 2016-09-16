@@ -6,6 +6,7 @@ use Doctrine\Common\Persistence\AbstractManagerRegistry;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManager;
 use Symfony\Bundle\FrameworkBundle\Client;
+use Symfony\Component\HttpKernel\TerminableInterface;
 
 /**
  * Class ParaunitTestClient
@@ -13,12 +14,24 @@ use Symfony\Bundle\FrameworkBundle\Client;
  */
 class ParaunitTestClient extends Client
 {
-    /** @var  bool */
+    /** @var bool */
     private $reboot = false;
+    
+    /** @var bool */
+    protected $profilerEnabled = false;
 
     public function enableKernelRebootBeforeRequest()
     {
         $this->reboot = true;
+    }
+
+    public function enableProfiler()
+    {
+        if ($this->getContainer()->has('profiler')) {
+            $this->profilerEnabled = true;
+        }
+
+        parent::enableProfiler();
     }
 
     /**
@@ -45,11 +58,19 @@ class ParaunitTestClient extends Client
         $this->checkAllManagersForDeadlocks();
         $this->clearAllManagers();
 
-        $result = $this->kernel->handle($request);
+        if ($this->profilerEnabled) {
+            $this->getContainer()->get('profiler')->enable();
+        }
+
+        $response = $this->kernel->handle($request);
 
         $this->checkAllManagersForDeadlocks();
 
-        return $result;
+        if ($this->kernel instanceof TerminableInterface) {
+            $this->kernel->terminate($request, $response);
+        }
+
+        return $response;
     }
 
     private function clearAllManagers()
