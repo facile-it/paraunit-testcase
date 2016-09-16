@@ -2,7 +2,19 @@
 
 All notable changes of the Paraunit Testcase 0.x release series are documented in this file using the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
-## [0.2] - TBA
+## [0.3] - TBA
+
+### Changed
+
+* New `ParaunitCommandTestCase`: it uses the same "magic method" as the client, to use a different kernel & container
+ while testing a Console Command
+
+### Fixed
+
+* Fixed #7: now the Symfony Profiler works, so it's possible to check if a mail has been sent by the controller (thanks 
+to @marrek13 for the issue!)
+
+## [0.2] - 2016-08-16
 
 ### Changed
 
