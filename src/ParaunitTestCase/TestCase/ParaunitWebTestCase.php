@@ -11,6 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Liip\FunctionalTestBundle\Test\WebTestCase;
 use ParaunitTestCase\Client\ParaunitTestClient;
 use Symfony\Bundle\FrameworkBundle\Client;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class ParaUnitWebTestCase
@@ -179,25 +180,32 @@ abstract class ParaunitWebTestCase extends WebTestCase
      */
     private function injectManagersInClient(ParaunitTestClient $client)
     {
+        $this->injectManagersInContainer($client->getContainer());
+    }
+
+    /**
+     * @param ContainerInterface $container
+     */
+    protected function injectManagersInContainer(ContainerInterface $container)
+    {
         /** @var ManagerRegistry $doctrine */
         $doctrine = $this->getContainer()->get('doctrine');
         $reflectionProperty = new \ReflectionProperty(Connection::class, '_conn');
-        $clientContainer = $client->getContainer();
 
         /** @var EntityManagerInterface $manager */
         foreach ($doctrine->getManagerNames() as $entityManagerName) {
             /** @var EntityManager $clientEntityManager */
-            $clientEntityManager = $clientContainer->get($entityManagerName);
+            $clientEntityManager = $container->get($entityManagerName);
             /** @var Connection $connection */
             $connection = $this->getContainer()->get($entityManagerName)->getConnection();
             $this->assertEquals(1, $connection->getTransactionNestingLevel(), 'Wrong level of transaction level');
 
-            $clientConnection = $clientEntityManager->getConnection();
-            $clientConnection->setTransactionIsolation(Connection::TRANSACTION_READ_COMMITTED);
+            $managerConnection = $clientEntityManager->getConnection();
+            $managerConnection->setTransactionIsolation(Connection::TRANSACTION_READ_COMMITTED);
             $clientEntityManager->beginTransaction();
 
             $reflectionProperty->setAccessible(true);
-            $reflectionProperty->setValue($clientConnection, $connection->getWrappedConnection());
+            $reflectionProperty->setValue($managerConnection, $connection->getWrappedConnection());
             $reflectionProperty->setAccessible(false);
         }
     }

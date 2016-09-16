@@ -7,7 +7,7 @@ All notable changes of the Paraunit Testcase 0.x release series are documented i
 ### Changed
 
 * New `ParaunitCommandTestCase`: it uses the same "magic method" as the client, to use a different kernel & container
- while testing a Console Command
+ while testing a Console `ContainerAwareCommand`
 
 ### Fixed
 
