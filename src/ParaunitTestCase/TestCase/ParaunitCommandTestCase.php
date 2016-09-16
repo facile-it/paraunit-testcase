@@ -32,7 +32,6 @@ abstract class ParaunitCommandTestCase extends ParaunitWebTestCase
         $command->setContainer($container);
 
         $input['command'] = $command->getName();
-        $input['--env'] = isset($input['--env']) ? $input['--env'] : 'test';
 
         $tester = new CommandTester($command);
         $tester->execute($input);
