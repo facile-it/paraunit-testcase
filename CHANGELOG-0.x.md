@@ -2,7 +2,7 @@
 
 All notable changes of the Paraunit Testcase 0.x release series are documented in this file using the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
-## [0.3] - TBA
+## [0.3] - 2016-09-16
 
 ### Changed
 
