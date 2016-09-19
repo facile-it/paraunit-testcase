@@ -3,14 +3,12 @@
 namespace ParaunitTestCase\TestCase;
 
 use Doctrine\Common\Persistence\ManagerRegistry;
-use Doctrine\Common\Persistence\Mapping\MappingException;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Liip\FunctionalTestBundle\Test\WebTestCase;
 use ParaunitTestCase\Client\ParaunitTestClient;
-use Symfony\Bundle\FrameworkBundle\Client;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -63,7 +61,7 @@ abstract class ParaunitWebTestCase extends WebTestCase
             $connection = $manager->getConnection();
             if ($connection instanceof \ParaunitTestCase\Connection\Connection) {
                 $connection->closeForReal();
-            } else if (method_exists($connection, 'close')) {
+            } elseif (method_exists($connection, 'close')) {
                 $connection->close();
             }
         }

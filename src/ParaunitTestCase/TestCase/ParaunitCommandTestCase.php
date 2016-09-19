@@ -24,7 +24,7 @@ abstract class ParaunitCommandTestCase extends ParaunitWebTestCase
         $kernel = self::createKernel();
         $kernel->boot();
 
-        $application = new Application($kernel);
+        $application = new Application('Paraunit Command Test');
         $application->add($command);
 
         $container = $kernel->getContainer();
