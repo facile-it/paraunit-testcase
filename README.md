@@ -3,6 +3,8 @@
 [![Stable release][Last stable image]][Packagist link]
 [![Unstable release][Last unstable image]][Packagist link]
 
+[![Scrutinizer][Master scrutinizer image]][Master scrutinizer link]
+
 TestCase and HTTP client to test Symfony2 applications with Doctrine database isolation:
 
  * no more manual database cleanup after each test, it's already done!
@@ -80,5 +82,7 @@ It's possible to extend `ParaunitWebTestCase` more before using it as your base 
 
 [Last stable image]: https://poser.pugx.org/facile-it/paraunit-testcase/version.svg
 [Last unstable image]: https://poser.pugx.org/facile-it/paraunit-testcase/v/unstable.svg
+[Master scrutinizer image]: https://scrutinizer-ci.com/g/facile-it/paraunit/badges/quality-score.png?b=master
 
 [Packagist link]: https://packagist.org/packages/facile-it/paraunit-testcase
+[Master scrutinizer link]: https://scrutinizer-ci.com/g/facile-it/paraunit/?branch=master
