@@ -9,33 +9,9 @@ use Symfony\Component\Console\Tester\CommandTester;
 /**
  * Class ParaunitCommandTestCase
  * @package ParaunitTestCase\TestCase
+ * 
+ * @deprecated Use ParaunitFunctionalTestCase; this class will be removed in the 1.0 release
  */
-abstract class ParaunitCommandTestCase extends ParaunitWebTestCase
+abstract class ParaunitCommandTestCase extends ParaunitFunctionalTestCase
 {
-    /**
-     * Runs a command and returns it output
-     * 
-     * @param ContainerAwareCommand $command
-     * @param array $input
-     * @return string
-     */
-    public function runCommandTesterAndReturnOutput(ContainerAwareCommand $command, array $input = [])
-    {
-        $kernel = self::createKernel();
-        $kernel->boot();
-
-        $application = new Application('Paraunit Command Test');
-        $application->add($command);
-
-        $container = $kernel->getContainer();
-        $this->injectManagersInContainer($container);
-        $command->setContainer($container);
-
-        $input['command'] = $command->getName();
-
-        $tester = new CommandTester($command);
-        $tester->execute($input);
-
-        return $tester->getDisplay();
-    }
 }

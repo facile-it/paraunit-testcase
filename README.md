@@ -5,7 +5,7 @@
 
 [![Scrutinizer][Master scrutinizer image]][Master scrutinizer link]
 
-TestCase and HTTP client to test Symfony2 applications with Doctrine database isolation:
+TestCase and HTTP client to test Symfony2/3 applications with Doctrine database isolation:
 
  * no more manual database cleanup after each test, it's already done!
  * no more garbage left over in your test database
@@ -13,7 +13,7 @@ TestCase and HTTP client to test Symfony2 applications with Doctrine database is
  * (a bit) faster functional tests
 
 ## Requirements
-This package is meant to be used for functional testing inside Symfony2+Doctrine applications. It works only with transactional databases, so Entity Manager only, sorry!
+This package is meant to be used for functional testing inside Symfony2/3+Doctrine applications. It works only with transactional databases, so Entity Manager only, sorry!
 
 If you need to test controllers that requires authentication, it's best to set the security to HTTP-basic in your test environment, to speed up the test and avoid re-testing the login functionality of your app; if this isn't viable for you, see **Advanced usage**.
 
@@ -28,13 +28,13 @@ To use this package, use composer:
 ``` 
 {
     "require": {
-        "facile-it/paraunit-testcase": "~0.1"
+        "facile-it/paraunit-testcase": "~0.4"
     }
 }
 ```
 
 ## Usage
-This package provides a test case class, `ParaunitWebTestCase`: to achieve **per-test-method transactional isolation**, extend you functional test classes from it.
+This package provides a test case class, `ParaunitFunctionalTestCase`: to achieve **per-test-method transactional isolation**, extend you functional test classes from it.
 
 With this, anything that your test writes on the DB:
 
@@ -44,7 +44,7 @@ With this, anything that your test writes on the DB:
  * your app will behave normally: it can open and close more transactions, and it will fail as normal when flushing incorrect/incomplete data
 
 ### Testing a controller
-The TestCase provides some utility methods:
+The TestCase provides some utility methods for testing controller's actions:
 
  * `getUnauthorizedClient()`: extended Symfony HTTP client, for controller testing (it can read inside the transaction, even between multiple requests)
  * `getAuthorizedClient($user, $password)`: same as before, but with HTTP basic authentication
@@ -54,10 +54,9 @@ The TestCase provides some utility methods:
  as persisted/rollbacked on the database.
 
 ### Testing a Console Command
-We also provide an easy way to test in parallel easily console `ContainerAwareCommand`. To do it, you need to extend
-your test class from our `ParaunitCommandTestCase`, and use the the `runCommandTesterAndReturnOutput()` method, like this:
+We also provide an easy way to test in parallel easily console `ContainerAwareCommand`. To do it use the the `ParaunitFunctionalTestCase::runCommandTesterAndReturnOutput()` method, like this:
 ```
-class YourCommandTest extends ParaunitCommandTestCase
+class YourCommandTest extends ParaunitFunctionalTestCase
 {
     public function testYourCommand()
     {
@@ -75,7 +74,7 @@ class YourCommandTest extends ParaunitCommandTestCase
 ```
 
 ##Advanced usage
-It's possible to extend `ParaunitWebTestCase` more before using it as your base test case:
+It's possible to extend `ParaunitFunctionalTestCase` more before using it as your base test case:
 
  * extend and use the `prepareAuthorizedClient(...)` hook method to add additional authentication and preparation to the client, if needed
  * do NOT EVER FORGET to call the parent methods first if you override the `setUp()` and `tearDown()` methods
