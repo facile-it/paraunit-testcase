@@ -15,14 +15,14 @@ use Symfony\Component\HttpKernel\TerminableInterface;
 class ParaunitTestClient extends Client
 {
     /** @var bool */
-    private $reboot = false;
+    private $rebootEnabled = false;
     
     /** @var bool */
     protected $profilerEnabled = false;
 
     public function enableKernelRebootBeforeRequest()
     {
-        $this->reboot = true;
+        $this->rebootEnabled = true;
     }
 
     public function enableProfiler()
@@ -46,7 +46,7 @@ class ParaunitTestClient extends Client
      */
     protected function doRequest($request)
     {
-        if ($this->reboot) {
+        if ($this->rebootEnabled) {
             $managers = $this->getDoctrineManagers();
 
             $this->kernel->shutdown();
