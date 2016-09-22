@@ -2,6 +2,12 @@
 
 All notable changes of the Paraunit Testcase 0.x release series are documented in this file using the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## [0.4] - 2016-09-22
+
+### Changed
+
+* Deprecated `ParaunitWebTestCase` and `ParaunitCommandTestCase`, in favor of the new single `ParaunitFunctionalTestCase` class; both classes will be removed in the 1.0 release.
+
 ## [0.3] - 2016-09-16
 
 ### Changed
