@@ -22,12 +22,12 @@ It's suggested in combination with [facile-it/paraunit](https://github.com/facil
 ## Installation
 To use this package, use composer:
 
- * from CLI: `composer require facile-it/paraunit-testcase`
+ * from CLI: `composer require --dev facile-it/paraunit-testcase`
  * or, directly in your `composer.json`:
 
 ``` 
 {
-    "require": {
+    "require-dev": {
         "facile-it/paraunit-testcase": "~0.4"
     }
 }
