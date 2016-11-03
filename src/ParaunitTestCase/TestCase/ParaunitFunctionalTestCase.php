@@ -90,7 +90,7 @@ abstract class ParaunitFunctionalTestCase extends WebTestCase
 
     /**
      * Runs a command and returns it output
-     * 
+     *
      * @deprecated Prefer to use the new runContainerAwareCommandTester() method;
      *             Warning, the new method doesn't add the command name to the input automatically
      *
@@ -124,7 +124,8 @@ abstract class ParaunitFunctionalTestCase extends WebTestCase
      * @param ContainerAwareCommand $command
      * @return ContainerAwareCommandTester
      */
-    protected function createContainerAwareCommandTester(ContainerAwareCommand $command) {
+    protected function createContainerAwareCommandTester(ContainerAwareCommand $command)
+    {
         $kernel = self::createKernel();
         $kernel->boot();
 

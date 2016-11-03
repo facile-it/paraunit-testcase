@@ -2,6 +2,17 @@
 
 All notable changes of the Paraunit Testcase 0.x release series are documented in this file using the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## [0.5] - 2016-11-03
+
+### Changed
+
+* Add a new `ContainerAwareCommandTester` that extends Symfony's `CommandTester`: this class is specialized to test
+a `ContainerAwareCommand` class
+* New `runContainerAwareCommandTester` and `createContainerAwareCommandTester` methods in the testcase (usage explained
+in the readme) 
+* Deprecated `ParaunitFunctionalTestCase::runCommandTesterAndReturnOutput` in favor of the new 
+`ParaunitFunctionalTestCase::runContainerAwareCommandTester` 
+
 ## [0.4] - 2016-09-22
 
 ### Changed
