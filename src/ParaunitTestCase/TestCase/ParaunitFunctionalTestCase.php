@@ -10,8 +10,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Liip\FunctionalTestBundle\Test\WebTestCase;
 use ParaunitTestCase\Client\ParaunitTestClient;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Symfony\Component\Console\Application;
-use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -92,6 +90,9 @@ abstract class ParaunitFunctionalTestCase extends WebTestCase
 
     /**
      * Runs a command and returns it output
+     * 
+     * @deprecated Prefer to use the new runContainerAwareCommandTester() method;
+     *             Warning, the new method doesn't add the command name to the input automatically
      *
      * @param ContainerAwareCommand $command
      * @param array $input
@@ -99,22 +100,38 @@ abstract class ParaunitFunctionalTestCase extends WebTestCase
      */
     public function runCommandTesterAndReturnOutput(ContainerAwareCommand $command, array $input = [])
     {
+        return $this->runContainerAwareCommandTester($command, $input);
+    }
+
+    /**
+     * @param ContainerAwareCommand $command
+     * @param array $input An array of arguments to pass to the command, in the form of 'argName' => argValue
+     * @param array $options An array of options to pass to the command, in the form of 'optName' => optValue
+     * @return string
+     */
+    protected function runContainerAwareCommandTester(
+        ContainerAwareCommand $command,
+        array $input = array(),
+        array $options = array()
+    ) {
+        $tester = $this->createContainerAwareCommandTester($command);
+        $tester->execute($input, $options);
+
+        return $tester->getDisplay();
+    }
+
+    /**
+     * @param ContainerAwareCommand $command
+     * @return ContainerAwareCommandTester
+     */
+    protected function createContainerAwareCommandTester(ContainerAwareCommand $command) {
         $kernel = self::createKernel();
         $kernel->boot();
 
-        $application = new Application('Paraunit Command Test');
-        $application->add($command);
-
         $container = $kernel->getContainer();
         $this->injectManagersInContainer($container);
-        $command->setContainer($container);
 
-        $input['command'] = $command->getName();
-
-        $tester = new CommandTester($command);
-        $tester->execute($input);
-
-        return $tester->getDisplay();
+        return new ContainerAwareCommandTester($command, $container);
     }
 
     /**
@@ -134,7 +151,7 @@ abstract class ParaunitFunctionalTestCase extends WebTestCase
      * Overrides the original method to use our client class inside the makeClient() function
      *
      * @param array $options An array of options to pass to the createKernel class
-     * @param array $server  An array of server parameters
+     * @param array $server An array of server parameters
      *
      * @return ParaunitTestClient A Client instance
      */
