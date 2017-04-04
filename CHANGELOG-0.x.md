@@ -2,6 +2,12 @@
 
 All notable changes of the Paraunit Testcase 0.x release series are documented in this file using the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## [0.5.1] - 2017-04-04
+
+### Changed
+
+* Add a new `prepareIsolatedContainer(ContainerInterface $container)` hook that can be used to alter the container before being used in a Client or when using `runContainerAwareCommandTester()`
+
 ## [0.5] - 2016-11-03
 
 ### Changed

@@ -254,5 +254,16 @@ abstract class ParaunitFunctionalTestCase extends WebTestCase
             $reflectionProperty->setValue($managerConnection, $connection->getWrappedConnection());
             $reflectionProperty->setAccessible(false);
         }
+
+        $this->prepareIsolatedContainer($container);
+    }
+
+    /**
+     * Override this hook to alter the container before using it in a Client or with runContainerAwareCommandTester()
+     * 
+     * @param ContainerInterface $container
+     */
+    protected function prepareIsolatedContainer(ContainerInterface $container)
+    {
     }
 }
