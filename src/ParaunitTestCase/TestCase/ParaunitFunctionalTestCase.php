@@ -33,7 +33,7 @@ abstract class ParaunitFunctionalTestCase extends WebTestCase
     /**
      * Do not EVER forget to call parent::setUp() if you override this method!
      */
-    public function setUp()
+    protected function setUp()
     {
         parent::setUp();
 
@@ -52,7 +52,7 @@ abstract class ParaunitFunctionalTestCase extends WebTestCase
     /**
      * Do not EVER forget to call parent::tearDown() if you override this method!
      */
-    public function tearDown()
+    protected function tearDown()
     {
         /** @var EntityManagerInterface $manager */
         foreach ($this->getContainer()->get('doctrine')->getManagers() as $manager) {
