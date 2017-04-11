@@ -8,6 +8,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Liip\FunctionalTestBundle\Test\WebTestCase;
+use ParaunitTestCase\Client\KernelRebootHandler;
 use ParaunitTestCase\Client\ParaunitTestClient;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -18,6 +19,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 abstract class ParaunitFunctionalTestCase extends WebTestCase
 {
+    /** @var KernelRebootHandler */
+    private static $clientKernelRebootHandler;
+
     /**
      * @param null $name
      * @param array $data
@@ -28,6 +32,14 @@ abstract class ParaunitFunctionalTestCase extends WebTestCase
         ini_set('xdebug.max_nesting_level', 250);
 
         parent::__construct($name, $data, $dataName);
+    }
+
+    /**
+     * @param KernelRebootHandler | null $clientKernelRebootHandler
+     */
+    public static function setClientKernelRebootHandler(KernelRebootHandler $clientKernelRebootHandler = null)
+    {
+        self::$clientKernelRebootHandler = $clientKernelRebootHandler;
     }
 
     /**
@@ -161,6 +173,9 @@ abstract class ParaunitFunctionalTestCase extends WebTestCase
         static::bootKernel($options);
 
         $client = new ParaunitTestClient(static::$kernel);
+        if (self::$clientKernelRebootHandler instanceof KernelRebootHandler) {
+            $client->setKernelRebootHandler(self::$clientKernelRebootHandler);
+        }
         $client->setServerParameters($server);
 
         return $client;

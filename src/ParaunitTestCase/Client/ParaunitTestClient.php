@@ -17,9 +17,20 @@ class ParaunitTestClient extends Client
 {
     /** @var bool */
     private $rebootEnabled = false;
-    
+
     /** @var bool */
     protected $profilerEnabled = false;
+
+    /** @var KernelRebootHandler */
+    protected $kernelRebootHandler;
+
+    /**
+     * @param KernelRebootHandler $kernelRebootHandler
+     */
+    public function setKernelRebootHandler(KernelRebootHandler $kernelRebootHandler)
+    {
+        $this->kernelRebootHandler = $kernelRebootHandler;
+    }
 
     public function enableKernelRebootBeforeRequest()
     {
@@ -48,12 +59,7 @@ class ParaunitTestClient extends Client
     protected function doRequest($request)
     {
         if ($this->rebootEnabled) {
-            $managers = $this->getDoctrineManagers();
-
-            $this->kernel->shutdown();
-            $this->kernel->boot();
-
-            $this->reinjectDbConnections($managers);
+            $this->rebootKernel();
         }
 
         $this->checkAllManagersForDeadlocks();
@@ -80,7 +86,7 @@ class ParaunitTestClient extends Client
         foreach ($this->getDoctrine()->getManagers() as $manager) {
             $manager->clear();
 
-            if ( ! $manager->isOpen()) {
+            if (! $manager->isOpen()) {
                 throw new \RuntimeException(
                     'The EntityManager was closed before the request. Check if a previous request broke it. You can also try to explicitly reboot the kernel before the request'
                 );
@@ -158,10 +164,27 @@ class ParaunitTestClient extends Client
     private function extractConnectionName($connectionServiceName)
     {
         $matches = array();
-        if ( ! preg_match('/^doctrine\.dbal\.(.+)_connection$/', $connectionServiceName, $matches)) {
+        if (! preg_match('/^doctrine\.dbal\.(.+)_connection$/', $connectionServiceName, $matches)) {
             throw new \InvalidArgumentException('Non-standard Doctrine connection name: ' . $connectionServiceName);
         }
 
         return $matches[1];
+    }
+
+    private function rebootKernel()
+    {
+        if ($this->kernelRebootHandler) {
+            $this->kernelRebootHandler->beforeKernelReboot($this->getContainer());
+        }
+
+        $managers = $this->getDoctrineManagers();
+
+        $this->kernel->shutdown();
+        $this->kernel->boot();
+
+        $this->reinjectDbConnections($managers);
+        if ($this->kernelRebootHandler) {
+            $this->kernelRebootHandler->afterKernelReboot($this->getContainer());
+        }
     }
 }

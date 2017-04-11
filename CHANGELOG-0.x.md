@@ -2,6 +2,20 @@
 
 All notable changes of the Paraunit Testcase 0.x release series are documented in this file using the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## TBA
+### Changed
+### Fixed
+
+## [0.5.2] - 2017-04-11
+
+### Changed
+* Added `KernelRebootHandler` interface
+* Add possibility to set a `KernelRebootHandler` implementor in the test case to handle better the client's kernel reboots
+
+### Fixed
+* Fixed visibility of `ParaunitFunctionalTestCase`'s `setup` and `teardown` methods to `protected`, to reflect the 
+originals. 
+
 ## [0.5.1] - 2017-04-04
 
 ### Changed
