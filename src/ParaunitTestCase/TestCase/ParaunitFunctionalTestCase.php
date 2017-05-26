@@ -138,7 +138,7 @@ abstract class ParaunitFunctionalTestCase extends WebTestCase
      * @param ContainerAwareInterface|Command $command
      * @return ContainerAwareCommandTester
      */
-    private function createContainerAwareCommandTester(ContainerAwareInterface $command)
+    protected function createContainerAwareCommandTester(ContainerAwareInterface $command)
     {
         $kernel = self::createKernel();
         $kernel->boot();

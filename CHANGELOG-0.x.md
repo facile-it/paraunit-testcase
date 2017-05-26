@@ -6,6 +6,11 @@ All notable changes of the Paraunit Testcase 0.x release series are documented i
 ### Changed
 ### Fixed
 
+## [0.5.4] - 2017-05-26
+
+### Fixed
+* Revert `createContainerAwareCommandTester` visibility to protected 
+
 ## [0.5.3] - 2017-05-26
 
 ### Changed
