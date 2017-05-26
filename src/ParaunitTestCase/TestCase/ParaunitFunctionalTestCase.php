@@ -11,6 +11,8 @@ use Liip\FunctionalTestBundle\Test\WebTestCase;
 use ParaunitTestCase\Client\KernelRebootHandler;
 use ParaunitTestCase\Client\ParaunitTestClient;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -116,13 +118,13 @@ abstract class ParaunitFunctionalTestCase extends WebTestCase
     }
 
     /**
-     * @param ContainerAwareCommand $command
+     * @param ContainerAwareInterface $command
      * @param array $input An array of arguments to pass to the command, in the form of 'argName' => argValue
      * @param array $options An array of options to pass to the command, in the form of 'optName' => optValue
      * @return string
      */
     protected function runContainerAwareCommandTester(
-        ContainerAwareCommand $command,
+        ContainerAwareInterface $command,
         array $input = array(),
         array $options = array()
     ) {
@@ -133,16 +135,17 @@ abstract class ParaunitFunctionalTestCase extends WebTestCase
     }
 
     /**
-     * @param ContainerAwareCommand $command
+     * @param ContainerAwareInterface|Command $command
      * @return ContainerAwareCommandTester
      */
-    protected function createContainerAwareCommandTester(ContainerAwareCommand $command)
+    private function createContainerAwareCommandTester(ContainerAwareInterface $command)
     {
         $kernel = self::createKernel();
         $kernel->boot();
 
         $container = $kernel->getContainer();
         $this->injectManagersInContainer($container);
+        $this->assertInstanceOf(Command::class, $command);
 
         return new ContainerAwareCommandTester($command, $container);
     }

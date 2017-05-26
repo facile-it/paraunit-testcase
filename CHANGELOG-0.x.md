@@ -6,6 +6,11 @@ All notable changes of the Paraunit Testcase 0.x release series are documented i
 ### Changed
 ### Fixed
 
+## [0.5.3] - 2017-05-26
+
+### Changed
+* The `runContainerAwareCommandTester` now accepts a broader type, a `Command` that implements the `ContainerAwareInterface` (previously it accepted the too specific `ContainerAwareCommand`) 
+
 ## [0.5.2] - 2017-04-11
 
 ### Changed
