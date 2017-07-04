@@ -6,6 +6,11 @@ All notable changes of the Paraunit Testcase 0.x release series are documented i
 ### Changed
 ### Fixed
 
+## [0.5.5] - 2017-07-04
+
+### Fixed
+* Fix tag 0.5.4; re-tag necessary
+
 ## [0.5.4] - 2017-05-26
 
 ### Fixed
