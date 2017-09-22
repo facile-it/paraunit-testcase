@@ -1,5 +1,7 @@
 # paraunit-testcase
 
+**WARNING**: this package is now **abandoned**; we suggest [dama/doctrine-test-bundle](https://github.com/dmaicher/doctrine-test-bundle) as a replacement instead.
+
 [![Stable release][Last stable image]][Packagist link]
 [![Unstable release][Last unstable image]][Packagist link]
 
